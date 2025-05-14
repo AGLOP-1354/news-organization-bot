@@ -18,7 +18,7 @@ client = OpenAI(
 )
 gd = GdeltDoc()
 
-db = mongoClient['project1']
+db = mongoClient['news-organization']
 collection = db['NewsAnalysis']
 
 text = "삼성전자 주가는 상승한 반면에, 테슬라의 주가는 하락했습니다."
@@ -28,7 +28,7 @@ prompt = """아래 뉴스에서 S&P에 상장된 기업명을 모두 추출하�
 반드시 출력포맷만을 생성하고, 다른 텍스트는 생성하지 마시오.
 [{"organization": <기업명>, "positive": 0~1, "negative": 0~1, "neutral": 0~1}, ...]
     
-텍스트: 
+뉴스: 
 """
 
 def solar_pro_generate(query):
@@ -77,14 +77,17 @@ orgs = ['microsoft', 'apple']
 def analysis():
     for org in orgs:
         df = get_url(org)
+        dates = df['seendate']
         texts, titles = url_crawling(df)
         for idx, text in enumerate(texts):
             news_item = {}
             answer = solar_pro_generate(prompt + text)
+
             try:
                 answer_list = eval(answer)
                 news_item["text"] = text
                 news_item["title"] = titles[idx]
+                [item.update({"seendate": dates[idx]}) for item in answer_list]
                 news_item["sentiments"] = answer_list
                 news_item["date"] = datetime.datetime.now()
 
